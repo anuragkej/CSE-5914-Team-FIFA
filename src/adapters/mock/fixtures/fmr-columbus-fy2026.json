@@ -1,0 +1,12 @@
+{
+  "areaName": "Columbus, OH HUD Metro FMR Area",
+  "fiscalYear": 2026,
+  "byBedrooms": {
+    "0": 111100,
+    "1": 119400,
+    "2": 143000,
+    "3": 171500,
+    "4": 192700
+  },
+  "source": "HUD FY2026 FMR schedule (huduser.gov), effective 2025-10-01"
+}

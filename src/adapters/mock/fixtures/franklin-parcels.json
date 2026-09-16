@@ -1,0 +1,26 @@
+[
+  {
+    "parcelId": "010-041233-00",
+    "siteAddress": "2115 Summit St, Columbus, OH 43201",
+    "ownerName": "BUCKEYE CAMPUS PROPERTIES LLC",
+    "ownerMailingAddress": "PO Box 8213, Columbus, OH 43201",
+    "lastTransferDate": "2019-06-14",
+    "source": "synthetic, shaped like Franklin County Auditor Parcel CSV"
+  },
+  {
+    "parcelId": "010-002917-00",
+    "siteAddress": "83 E 12th Ave, Columbus, OH 43201",
+    "ownerName": "TWELFTH AVENUE HOLDINGS LLC",
+    "ownerMailingAddress": "1500 W Lane Ave Ste 200, Columbus, OH 43221",
+    "lastTransferDate": "2021-11-02",
+    "source": "synthetic, shaped like Franklin County Auditor Parcel CSV"
+  },
+  {
+    "parcelId": "010-018842-00",
+    "siteAddress": "1888 N 4th St, Columbus, OH 43201",
+    "ownerName": "NGUYEN THANH & LINH",
+    "ownerMailingAddress": "1888 N 4th St, Columbus, OH 43201",
+    "lastTransferDate": "2016-03-29",
+    "source": "synthetic, shaped like Franklin County Auditor Parcel CSV"
+  }
+]
