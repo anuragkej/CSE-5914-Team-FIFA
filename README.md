@@ -11,7 +11,7 @@ Docs: [project context](docs/project-context.md), [API research](docs/api-resear
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm test           # vitest, 16 tests
+npm test           # vitest, 20 tests
 npm run typecheck
 npm run lint
 npm run build && npm start
