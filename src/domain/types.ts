@@ -129,10 +129,20 @@ export interface AnalysisInput {
   landlordName?: string;
 }
 
+export type VerdictTone = "stop" | "caution" | "clear" | "incomplete";
+
+/** One-line answer to "should I sign this?", derived from the flags. */
+export interface Verdict {
+  tone: VerdictTone;
+  headline: string;
+  summary: string;
+}
+
 export interface Analysis {
   terms: ExtractedTerms;
   cost: CostBreakdown | null;
   market: MarketComparison;
   ownership: OwnershipCheck;
   flags: Flag[];
+  verdict: Verdict;
 }

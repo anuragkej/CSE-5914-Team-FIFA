@@ -4,6 +4,7 @@ import { checkOwnership } from "./ownership";
 import type { AnalysisPorts } from "./ports";
 import { evaluateRules } from "./rules";
 import type { Analysis, AnalysisInput } from "./types";
+import { deriveVerdict } from "./verdict";
 
 const COMPS_LIMIT = 6;
 
@@ -31,11 +32,6 @@ export async function analyze(input: AnalysisInput, ports: AnalysisPorts): Promi
       ? { status: "not_checked" as const, claimedLandlord: terms.landlordName, record: null, detail: "No address found, so ownership was not checked." }
       : checkOwnership(terms.landlordName, record);
 
-  return {
-    terms,
-    cost,
-    market,
-    ownership,
-    flags: evaluateRules({ terms, cost, market, ownership }),
-  };
+  const flags = evaluateRules({ terms, cost, market, ownership });
+  return { terms, cost, market, ownership, flags, verdict: deriveVerdict(flags, cost) };
 }

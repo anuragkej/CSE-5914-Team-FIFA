@@ -30,6 +30,7 @@ describe("analyze: standard lease", () => {
     expect(result.ownership.status).toBe("match");
 
     expect(result.flags.map((f) => f.code)).toEqual([]);
+    expect(result.verdict.tone).toBe("clear");
   });
 });
 
@@ -56,6 +57,12 @@ describe("analyze: suspicious sublease", () => {
       "AUTO_RENEWAL",
     ]);
     expect(result.flags.filter((f) => f.severity === "danger")).toHaveLength(4);
+    expect(result.verdict).toEqual({
+      tone: "stop",
+      headline: "Do not pay anything yet",
+      summary:
+        "Attorney's fees clause is unenforceable in Ohio. Waiver of landlord liability is void in Ohio. Payment requested via Zelle, Cash App.",
+    });
     expect(result.market.compDeltaPct).toBeCloseTo((65000 - 143000) / 143000, 6);
   });
 });
