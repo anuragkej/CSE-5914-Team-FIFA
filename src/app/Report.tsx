@@ -1,194 +1,238 @@
-import type { Analysis, Cadence, Cents, MarketVerdict, OwnershipStatus } from "@/domain/types";
+import type { ReactNode } from "react";
+import type { VariantProps } from "class-variance-authority";
+import { CheckCircle2, Receipt } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle, alertVariants } from "@/components/ui/alert";
+import { Badge, badgeVariants } from "@/components/ui/badge";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import type {
+  Analysis,
+  ExtractedTerms,
+  Flag,
+  MarketComparison,
+  MarketVerdict,
+  OwnershipCheck,
+  OwnershipStatus,
+  Severity,
+} from "@/domain/types";
+import { CostCard } from "./CostCard";
+import { cadenceLabel, MISSING, money, signedPercent } from "./format";
+import { VerdictAlert } from "./VerdictAlert";
 
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+type AlertVariant = NonNullable<VariantProps<typeof alertVariants>["variant"]>;
+type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
-function money(cents: Cents | null): string {
-  return cents === null ? "—" : usd.format(cents / 100);
+const SEVERITIES: Record<Severity, { label: string; alert: AlertVariant; badge: BadgeVariant }> = {
+  danger: { label: "Danger", alert: "destructive", badge: "destructive" },
+  warning: { label: "Warning", alert: "warning", badge: "warning" },
+  info: { label: "Info", alert: "info", badge: "info" },
+};
+
+const MARKET_VERDICTS: Record<MarketVerdict, { label: string; badge: BadgeVariant }> = {
+  below_market: { label: "Below market", badge: "success" },
+  at_market: { label: "At market", badge: "secondary" },
+  above_market: { label: "Above market", badge: "warning" },
+  unknown: { label: "Not enough data", badge: "outline" },
+};
+
+const OWNERSHIP_STATUSES: Record<OwnershipStatus, { label: string; badge: BadgeVariant }> = {
+  match: { label: "Owner verified", badge: "success" },
+  mismatch: { label: "Owner mismatch", badge: "destructive" },
+  no_record: { label: "No county record", badge: "warning" },
+  not_checked: { label: "Not checked", badge: "outline" },
+};
+
+function DefinitionList({ items }: { items: Array<{ label: string; value: ReactNode }> }) {
+  return (
+    <dl className="grid grid-cols-[minmax(0,auto)_1fr] gap-x-6 gap-y-1.5">
+      {items.map((item) => (
+        <div key={item.label} className="col-span-2 grid grid-cols-subgrid">
+          <dt className="text-muted-foreground">{item.label}</dt>
+          <dd className="min-w-0 break-words">{item.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
-function signedPct(value: number | null): string {
-  if (value === null) return "—";
-  const pct = Math.round(value * 100);
-  return `${pct > 0 ? "+" : ""}${pct}%`;
+function FlagAlert({ flag }: { flag: Flag }) {
+  const severity = SEVERITIES[flag.severity];
+  return (
+    <Alert variant={severity.alert}>
+      <div className="flex items-center justify-between gap-2">
+        <Badge variant={severity.badge}>{severity.label}</Badge>
+        {flag.basis && <span className="text-xs text-muted-foreground">{flag.basis}</span>}
+      </div>
+      <AlertTitle>{flag.title}</AlertTitle>
+      <AlertDescription>{flag.detail}</AlertDescription>
+      {flag.excerpt && (
+        <blockquote className="mt-1 border-l-2 pl-3 font-mono text-xs text-muted-foreground">{flag.excerpt}</blockquote>
+      )}
+    </Alert>
+  );
 }
 
-function cadenceLabel(cadence: Cadence): string {
-  switch (cadence) {
-    case "monthly":
-      return "per month";
-    case "annual":
-      return "per year";
-    case "one_time":
-      return "one time";
-    default: {
-      const exhaustive: never = cadence;
-      return exhaustive;
-    }
-  }
+function FlagsCard({ flags }: { flags: Flag[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Flags</CardTitle>
+        <CardAction>
+          <Badge variant="secondary">{flags.length}</Badge>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        {flags.length === 0 ? (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CheckCircle2 />
+              </EmptyMedia>
+              <EmptyTitle>Nothing unusual found in the text</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {flags.map((flag) => (
+              <FlagAlert key={flag.code} flag={flag} />
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
-function verdictLabel(verdict: MarketVerdict): string {
-  switch (verdict) {
-    case "below_market":
-      return "Below market";
-    case "at_market":
-      return "At market";
-    case "above_market":
-      return "Above market";
-    case "unknown":
-      return "Not enough data";
-    default: {
-      const exhaustive: never = verdict;
-      return exhaustive;
-    }
-  }
+function TermsSection({ terms }: { terms: ExtractedTerms }) {
+  return (
+    <div className="flex flex-col gap-4">
+      <DefinitionList
+        items={[
+          { label: "Address", value: terms.address ?? MISSING },
+          { label: "Bedrooms", value: terms.bedrooms ?? MISSING },
+          { label: "Landlord", value: terms.landlordName ?? MISSING },
+          { label: "Monthly rent", value: money(terms.monthlyRent) },
+          { label: "Security deposit", value: money(terms.securityDeposit) },
+          { label: "Term", value: terms.leaseTermMonths ? `${terms.leaseTermMonths} months` : MISSING },
+        ]}
+      />
+      {terms.fees.length === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Receipt />
+            </EmptyMedia>
+            <EmptyTitle>No fees beyond rent</EmptyTitle>
+            <EmptyDescription>Nothing in the text charged on top of the monthly rent.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : (
+        <Table>
+          <TableBody>
+            {terms.fees.map((fee, i) => (
+              <TableRow key={`${fee.label}-${i}`}>
+                <TableCell className="whitespace-normal">{fee.label}</TableCell>
+                <TableCell className="text-right tabular-nums">{money(fee.amount)}</TableCell>
+                <TableCell className="text-muted-foreground">{cadenceLabel[fee.cadence]}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
 }
 
-function ownershipLabel(status: OwnershipStatus): string {
-  switch (status) {
-    case "match":
-      return "Owner verified";
-    case "mismatch":
-      return "Owner mismatch";
-    case "no_record":
-      return "No county record";
-    case "not_checked":
-      return "Not checked";
-    default: {
-      const exhaustive: never = status;
-      return exhaustive;
-    }
-  }
+function MarketSection({ market }: { market: MarketComparison }) {
+  const verdict = MARKET_VERDICTS[market.verdict];
+  const benchmarks = [
+    { label: "HUD Fair Market Rent", amount: market.fmr, delta: market.fmrDeltaPct },
+    { label: "Median of comps", amount: market.compMedian, delta: market.compDeltaPct },
+  ];
+  return (
+    <div className="flex flex-col gap-4">
+      <DefinitionList
+        items={benchmarks.map((b) => ({
+          label: b.label,
+          value: (
+            <span className="flex flex-wrap items-center gap-2">
+              {money(b.amount)}
+              <Badge variant={verdict.badge}>{signedPercent(b.delta)}</Badge>
+            </span>
+          ),
+        }))}
+      />
+      {market.comps.length > 0 && (
+        <Table>
+          <TableBody>
+            {market.comps.map((c) => (
+              <TableRow key={c.id}>
+                <TableCell className="whitespace-normal">
+                  {c.address} <span className="text-muted-foreground">· {c.neighborhood}</span>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {c.bedrooms}bd/{c.bathrooms}ba
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{money(c.rent)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
+}
+
+function OwnershipSection({ ownership }: { ownership: OwnershipCheck }) {
+  const status = OWNERSHIP_STATUSES[ownership.status];
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant={status.badge}>{status.label}</Badge>
+        <span>{ownership.detail}</span>
+      </div>
+      {ownership.record && (
+        <DefinitionList
+          items={[
+            { label: "Parcel", value: ownership.record.parcelId },
+            { label: "Owner", value: ownership.record.ownerName },
+            { label: "Last transfer", value: ownership.record.lastTransferDate },
+          ]}
+        />
+      )}
+    </div>
+  );
 }
 
 export function Report({ analysis }: { analysis: Analysis }) {
-  const { terms, cost, market, ownership, flags } = analysis;
-  const dangers = flags.filter((f) => f.severity === "danger").length;
-
+  const { terms, cost, market, ownership, flags, verdict } = analysis;
   return (
-    <section className="report" aria-live="polite">
-      <div className="summary">
-        <div className="card stat">
-          <span className="label">True monthly cost</span>
-          <strong>{money(cost?.trueMonthlyCost ?? null)}</strong>
-          <span className="sub">
-            {cost ? `${money(cost.rent)} rent + ${money(cost.trueMonthlyCost - cost.rent)} in fees` : "rent not found"}
-          </span>
-        </div>
-        <div className="card stat">
-          <span className="label">Cash due at move-in</span>
-          <strong>{money(cost?.moveInCash ?? null)}</strong>
-          <span className="sub">first month + deposit + one-time fees</span>
-        </div>
-        <div className={`card stat verdict-${market.verdict}`}>
-          <span className="label">Versus comparable units</span>
-          <strong>{signedPct(market.compDeltaPct ?? market.fmrDeltaPct)}</strong>
-          <span className="sub">{verdictLabel(market.verdict)}</span>
-        </div>
-        <div className={`card stat own-${ownership.status}`}>
-          <span className="label">Ownership check</span>
-          <strong>{ownershipLabel(ownership.status)}</strong>
-          <span className="sub">{dangers > 0 ? `${dangers} serious flag${dangers > 1 ? "s" : ""}` : "no serious flags"}</span>
-        </div>
-      </div>
-
-      <div className="card">
-        <h2>Flags ({flags.length})</h2>
-        {flags.length === 0 && <p className="muted">Nothing unusual found in the text.</p>}
-        <ul className="flags">
-          {flags.map((f) => (
-            <li key={f.code} className={`flag flag-${f.severity}`}>
-              <div className="flag-head">
-                <span className="badge">{f.severity}</span>
-                <strong>{f.title}</strong>
-                {f.basis && <span className="basis">{f.basis}</span>}
-              </div>
-              <p>{f.detail}</p>
-              {f.excerpt && <blockquote>{f.excerpt}</blockquote>}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="two-col">
-        <div className="card">
-          <h2>What we read</h2>
-          <dl className="terms">
-            <dt>Address</dt>
-            <dd>{terms.address ?? "—"}</dd>
-            <dt>Bedrooms</dt>
-            <dd>{terms.bedrooms ?? "—"}</dd>
-            <dt>Landlord</dt>
-            <dd>{terms.landlordName ?? "—"}</dd>
-            <dt>Monthly rent</dt>
-            <dd>{money(terms.monthlyRent)}</dd>
-            <dt>Security deposit</dt>
-            <dd>{money(terms.securityDeposit)}</dd>
-            <dt>Term</dt>
-            <dd>{terms.leaseTermMonths ? `${terms.leaseTermMonths} months` : "—"}</dd>
-          </dl>
-          <h3>Fees</h3>
-          {terms.fees.length === 0 ? (
-            <p className="muted">No fees beyond rent were found.</p>
-          ) : (
-            <table>
-              <tbody>
-                {terms.fees.map((fee, i) => (
-                  <tr key={i}>
-                    <td>{fee.label}</td>
-                    <td className="num">{money(fee.amount)}</td>
-                    <td className="muted">{cadenceLabel(fee.cadence)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        <div className="card">
-          <h2>Market</h2>
-          <dl className="terms">
-            <dt>HUD Fair Market Rent</dt>
-            <dd>
-              {money(market.fmr)} <span className="muted">({signedPct(market.fmrDeltaPct)})</span>
-            </dd>
-            <dt>Median of comps</dt>
-            <dd>
-              {money(market.compMedian)} <span className="muted">({signedPct(market.compDeltaPct)})</span>
-            </dd>
-          </dl>
-          {market.comps.length > 0 && (
-            <table>
-              <tbody>
-                {market.comps.map((c) => (
-                  <tr key={c.id}>
-                    <td>
-                      {c.address} <span className="muted">· {c.neighborhood}</span>
-                    </td>
-                    <td className="muted">
-                      {c.bedrooms}bd/{c.bathrooms}ba
-                    </td>
-                    <td className="num">{money(c.rent)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <h3>County record</h3>
-          {ownership.record ? (
-            <dl className="terms">
-              <dt>Parcel</dt>
-              <dd>{ownership.record.parcelId}</dd>
-              <dt>Owner</dt>
-              <dd>{ownership.record.ownerName}</dd>
-              <dt>Last transfer</dt>
-              <dd>{ownership.record.lastTransferDate}</dd>
-            </dl>
-          ) : (
-            <p className="muted">{ownership.detail}</p>
-          )}
-        </div>
-      </div>
+    <section className="flex flex-col gap-6" aria-live="polite">
+      <VerdictAlert verdict={verdict} />
+      <CostCard cost={cost} fallback={verdict.summary} />
+      <FlagsCard flags={flags} />
+      <Accordion multiple defaultValue={["terms"]}>
+        <AccordionItem value="terms">
+          <AccordionTrigger>What we read</AccordionTrigger>
+          <AccordionContent>
+            <TermsSection terms={terms} />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="market">
+          <AccordionTrigger>Market</AccordionTrigger>
+          <AccordionContent>
+            <MarketSection market={market} />
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="ownership">
+          <AccordionTrigger>Ownership</AccordionTrigger>
+          <AccordionContent>
+            <OwnershipSection ownership={ownership} />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </section>
   );
 }
