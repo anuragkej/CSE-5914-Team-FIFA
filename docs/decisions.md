@@ -1,8 +1,14 @@
 # Decisions
 
-## Stack: Next.js 16 + React 19 + TypeScript, nothing else yet
+## Stack: Next.js 16 + React 19 + TypeScript + shadcn/ui
 
-Anurag confirmed the team knows React, TypeScript and Next.js, and the slides name Next.js + TypeScript with Supabase. The prototype is a single Next.js app: server actions call the domain layer, which calls adapters. There is no separate Python FastAPI service even though the slides list one. The talk never mentioned it, every job it was assigned (parse documents, score deals, run a rule engine) is done here in TypeScript in under 600 lines, and a second language doubles the deploy surface for a five-person team with no ops budget. If pgvector RAG over lease clauses becomes real, Supabase's `pgvector` is reachable from TypeScript too. Vitest for tests because it reads the same `tsconfig` paths and needs no Babel or Jest config. No Tailwind, no component library, no ORM, no state manager: one CSS file and plain React are enough for one page, and each dependency is a thing the team must learn to maintain.
+Anurag confirmed the team knows React, TypeScript and Next.js, and the slides name Next.js + TypeScript with Supabase. The prototype is a single Next.js app: server actions call the domain layer, which calls adapters. There is no separate Python FastAPI service even though the slides list one. The talk never mentioned it, every job it was assigned (parse documents, score deals, run a rule engine) is done here in TypeScript in under 600 lines, and a second language doubles the deploy surface for a five-person team with no ops budget. If pgvector RAG over lease clauses becomes real, Supabase's `pgvector` is reachable from TypeScript too. Vitest for tests because it reads the same `tsconfig` paths and needs no Babel or Jest config. No ORM, no state manager.
+
+UI is shadcn/ui (nova preset, Base UI primitives, Tailwind v4). Components are copied into `src/components/ui/` as source, so there is no runtime component dependency to upgrade and the team can edit any of them. shadcn ships one status color (destructive); the report needs three severities and four verdict tones, so `globals.css` adds `warning`, `info`, and `success` tokens and `Alert` and `Badge` get matching variants. Every mapping from a domain union to a variant, label, or icon is a `Record` table in the component that uses it.
+
+## Report layout: verdict first, single column
+
+Three layouts were sketched as throwaway HTML and screenshotted before the shadcn build: a stat-card dashboard, a split pane with the input pinned left and tabs on the right, and a single column that leads with a verdict. The dashboard reads as a generic admin page. The split pane hides fees, market, and ownership behind tabs, which is wrong for a report a student screenshots and sends to a friend. The single column won: verdict, then true cost, then flags, then details in an accordion. It is also the only one that needs no layout change at 390px.
 
 ## Domain model first, ports around it
 

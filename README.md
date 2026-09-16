@@ -11,7 +11,7 @@ Docs: [project context](docs/project-context.md), [API research](docs/api-resear
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm test           # vitest, 20 tests
+npm test           # vitest, 16 tests
 npm run typecheck
 npm run lint
 npm run build && npm start
@@ -40,7 +40,9 @@ src/
       fixtureMarketData.ts    HUD FY2026 Columbus FMR (real) + synthetic campus-area comps
       fixturePropertyRecords.ts  parcel lookup shaped like the Franklin County Auditor CSV
       sampleDocuments.ts      three sample inputs used by the UI and tests
+    verdict.ts     one-line answer derived from the flags
   app/             Next.js App Router: page, server action, form, report
+  components/ui/   shadcn/ui components, copied in as source (nova preset)
 ```
 
 Data flow: `AnalyzerForm` (client) submits to `analyzeAction` (server action) which calls `analyze(input, createPorts())`. `analyze` extracts terms, fetches FMR, comps and the parcel record in parallel, computes cost, compares to market, checks ownership, evaluates rules, and returns one `Analysis` object the `Report` renders.
