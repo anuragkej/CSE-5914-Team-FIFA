@@ -1,0 +1,20 @@
+[
+  { "id": "L001", "address": "2115 Summit St", "neighborhood": "University District", "bedrooms": 2, "bathrooms": 1, "sqft": 850, "rent": 145000, "source": "synthetic" },
+  { "id": "L002", "address": "1888 N 4th St", "neighborhood": "University District", "bedrooms": 2, "bathrooms": 1, "sqft": 900, "rent": 139500, "source": "synthetic" },
+  { "id": "L003", "address": "77 E Norwich Ave", "neighborhood": "University District", "bedrooms": 2, "bathrooms": 1, "sqft": 800, "rent": 152000, "source": "synthetic" },
+  { "id": "L004", "address": "241 Chittenden Ave", "neighborhood": "University District", "bedrooms": 2, "bathrooms": 2, "sqft": 1000, "rent": 168000, "source": "synthetic" },
+  { "id": "L005", "address": "1424 Indianola Ave", "neighborhood": "Weinland Park", "bedrooms": 2, "bathrooms": 1, "sqft": 875, "rent": 132500, "source": "synthetic" },
+  { "id": "L006", "address": "331 E 15th Ave", "neighborhood": "University District", "bedrooms": 2, "bathrooms": 1, "sqft": 820, "rent": 141000, "source": "synthetic" },
+  { "id": "L007", "address": "99 W Lane Ave", "neighborhood": "University District", "bedrooms": 1, "bathrooms": 1, "sqft": 600, "rent": 119500, "source": "synthetic" },
+  { "id": "L008", "address": "1560 Neil Ave", "neighborhood": "Victorian Village", "bedrooms": 1, "bathrooms": 1, "sqft": 650, "rent": 135000, "source": "synthetic" },
+  { "id": "L009", "address": "2470 N High St", "neighborhood": "Old North Columbus", "bedrooms": 1, "bathrooms": 1, "sqft": 580, "rent": 109500, "source": "synthetic" },
+  { "id": "L010", "address": "300 E 12th Ave", "neighborhood": "University District", "bedrooms": 1, "bathrooms": 1, "sqft": 620, "rent": 124000, "source": "synthetic" },
+  { "id": "L011", "address": "1200 Highland St", "neighborhood": "University District", "bedrooms": 1, "bathrooms": 1, "sqft": 560, "rent": 112000, "source": "synthetic" },
+  { "id": "L012", "address": "38 E 13th Ave", "neighborhood": "University District", "bedrooms": 3, "bathrooms": 2, "sqft": 1250, "rent": 219000, "source": "synthetic" },
+  { "id": "L013", "address": "1905 Waldeck Ave", "neighborhood": "University District", "bedrooms": 3, "bathrooms": 1, "sqft": 1180, "rent": 198000, "source": "synthetic" },
+  { "id": "L014", "address": "2214 Indiana Ave", "neighborhood": "Old North Columbus", "bedrooms": 3, "bathrooms": 1.5, "sqft": 1300, "rent": 189000, "source": "synthetic" },
+  { "id": "L015", "address": "130 E Frambes Ave", "neighborhood": "University District", "bedrooms": 3, "bathrooms": 2, "sqft": 1320, "rent": 235000, "source": "synthetic" },
+  { "id": "L016", "address": "180 E Woodruff Ave", "neighborhood": "University District", "bedrooms": 4, "bathrooms": 2, "sqft": 1600, "rent": 276000, "source": "synthetic" },
+  { "id": "L017", "address": "2020 Iuka Ave", "neighborhood": "University District", "bedrooms": 4, "bathrooms": 2, "sqft": 1700, "rent": 296000, "source": "synthetic" },
+  { "id": "L018", "address": "84 E Patterson Ave", "neighborhood": "Old North Columbus", "bedrooms": 4, "bathrooms": 1.5, "sqft": 1550, "rent": 252000, "source": "synthetic" }
+]
