@@ -11,7 +11,7 @@ Docs: [project context](docs/project-context.md), [API research](docs/api-resear
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm test           # vitest, 16 tests
+npm test           # vitest, 20 tests
 npm run typecheck
 npm run lint
 npm run build && npm start
@@ -28,9 +28,10 @@ src/
                    plus external shapes FairMarketRent, Comparable, PropertyRecord
     ports.ts       TermsExtractor, MarketDataProvider, PropertyRecordsProvider
     cost.ts        true monthly cost and move-in cash
-    market.ts      comps median, HUD FMR delta, verdict
+    market.ts      comps median, HUD FMR delta, market verdict
     ownership.ts   landlord name vs county owner
     rules.ts       flag rules with Ohio Revised Code citations
+    verdict.ts     one-line answer derived from flags and cost
     analyze.ts     orchestrates the above through the ports
     *.test.ts      literal-value tests
   adapters/
@@ -40,12 +41,11 @@ src/
       fixtureMarketData.ts    HUD FY2026 Columbus FMR (real) + synthetic campus-area comps
       fixturePropertyRecords.ts  parcel lookup shaped like the Franklin County Auditor CSV
       sampleDocuments.ts      three sample inputs used by the UI and tests
-    verdict.ts     one-line answer derived from the flags
   app/             Next.js App Router: page, server action, form, report
   components/ui/   shadcn/ui components, copied in as source (nova preset)
 ```
 
-Data flow: `AnalyzerForm` (client) submits to `analyzeAction` (server action) which calls `analyze(input, createPorts())`. `analyze` extracts terms, fetches FMR, comps and the parcel record in parallel, computes cost, compares to market, checks ownership, evaluates rules, and returns one `Analysis` object the `Report` renders.
+Data flow: `AnalyzerForm` (client) submits to `analyzeAction` (server action) which calls `analyze(input, createPorts())`. `analyze` extracts terms, fetches FMR, comps and the parcel record in parallel, computes cost, compares to market, checks ownership, evaluates rules, derives the verdict, and returns one `Analysis` object the `Report` renders.
 
 ## Where adapters plug in
 
