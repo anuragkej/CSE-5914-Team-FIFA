@@ -17,7 +17,12 @@ function Figure({ label, value, emphasized = false }: { label: string; value: st
   return (
     <div className="flex min-w-0 flex-col justify-between gap-1">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className={cn("font-heading tabular-nums", emphasized ? "text-2xl font-semibold" : "text-lg font-medium")}>
+      <span
+        className={cn(
+          "font-mono tabular-nums",
+          emphasized ? "text-[1.75rem] leading-[2.125rem] font-medium" : "text-lg font-medium",
+        )}
+      >
         {value}
       </span>
     </div>

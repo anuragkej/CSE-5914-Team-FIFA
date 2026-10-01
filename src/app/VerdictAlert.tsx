@@ -17,7 +17,9 @@ export function VerdictAlert({ verdict }: { verdict: Verdict }) {
   return (
     <Alert variant={variant} className="gap-1 px-5 py-4">
       <Icon className="size-5" />
-      <AlertTitle className="text-lg font-semibold">{verdict.headline}</AlertTitle>
+      <AlertTitle className="font-heading text-[2.75rem] leading-[3.25rem] font-normal tracking-tight">
+        {verdict.headline}
+      </AlertTitle>
       <AlertDescription className="text-base">{verdict.summary}</AlertDescription>
     </Alert>
   );
