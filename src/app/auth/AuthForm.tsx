@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -41,11 +41,25 @@ const NOTICE_BANNER: Record<ConfirmationNotice, Banner> = {
 };
 
 export function AuthForm(props: Props) {
-  const [state, formAction, pending] = useActionState<AuthFormState, FormData>(
-    props.mode === "sign_in" ? signInAction : signUpAction,
-    null,
-  );
   const [email, setEmail] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const mode = props.mode;
+  const submit = useCallback(async (prev: AuthFormState, formData: FormData) => {
+    setEmail(String(formData.get("email") ?? ""));
+    setAttempt((n) => n + 1);
+    return mode === "sign_in" ? signInAction(prev, formData) : signUpAction(prev, formData);
+  }, [mode]);
+  const [state, formAction, pending] = useActionState<AuthFormState, FormData>(submit, null);
+
+  useEffect(() => {
+    const input = document.getElementById("email");
+    if (!(input instanceof HTMLInputElement)) return;
+    // React 19 clears this uncontrolled input after the action returns.
+    const frame = requestAnimationFrame(() => {
+      input.value = email;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [email, attempt]);
 
   if (props.mode === "sign_up" && state?.kind === "confirmation_pending") {
     return (
@@ -76,14 +90,14 @@ export function AuthForm(props: Props) {
             <Field data-invalid={errors.email ? true : undefined}>
               <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
+                key={attempt}
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                value={email}
+                defaultValue={email}
                 aria-invalid={errors.email ? true : undefined}
-                onChange={(event) => setEmail(event.target.value)}
               />
               <FieldError>{errors.email ? EMAIL_COPY[errors.email] : null}</FieldError>
             </Field>
