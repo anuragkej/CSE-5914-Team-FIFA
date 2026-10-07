@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { requestAuth } from "@/adapters/supabase";
 import type { SignInOutcome, SignUpOutcome } from "@/domain/auth";
 
-/** `signed_in` always redirects, so the form never has to render it. */
 export type AuthFormState = Exclude<SignUpOutcome | SignInOutcome, { kind: "signed_in" }> | null;
 
 export async function signUpAction(_prev: AuthFormState, form: FormData): Promise<AuthFormState> {

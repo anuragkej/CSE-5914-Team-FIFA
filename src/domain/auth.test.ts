@@ -149,6 +149,35 @@ describe("signUp", () => {
   });
 });
 
+describe("signOut", () => {
+  it("resolves when the client reports a revoke error after clearing the session", async () => {
+    const scopes: string[] = [];
+    const auth = createAuth(
+      stub({
+        signOut: async (options) => {
+          scopes.push(options.scope);
+          return { error: { name: "AuthApiError", message: "revoke failed", status: 500 } };
+        },
+      }),
+    );
+
+    await expect(auth.signOut()).resolves.toBeUndefined();
+    expect(scopes).toEqual(["local"]);
+  });
+
+  it("rejects when clearing the local session throws", async () => {
+    const auth = createAuth(
+      stub({
+        signOut: async () => {
+          throw new Error("storage failed");
+        },
+      }),
+    );
+
+    await expect(auth.signOut()).rejects.toThrow("storage failed");
+  });
+});
+
 describe("session", () => {
   it("reads the claims, and reads signed out instead of throwing when Supabase fails", async () => {
     const live = createAuth(

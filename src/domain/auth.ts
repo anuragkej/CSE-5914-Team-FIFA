@@ -118,11 +118,7 @@ export function createAuth(client: AuthClient): Auth {
       }
     },
     async signOut() {
-      try {
-        await client.signOut({ scope: "local" });
-      } catch {
-        // A failed revoke still clears the local session. The caller redirects home either way.
-      }
+      await client.signOut({ scope: "local" });
     },
     async session() {
       try {
