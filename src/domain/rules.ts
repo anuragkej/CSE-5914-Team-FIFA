@@ -1,4 +1,5 @@
 import type {
+  Cents,
   Clause,
   ClauseTopic,
   CostBreakdown,
@@ -28,6 +29,17 @@ function clause(terms: ExtractedTerms, topic: ClauseTopic): Clause | undefined {
 
 function pct(value: number): string {
   return `${Math.round(Math.abs(value) * 100)}%`;
+}
+
+/** Share of monthly rent a late fee represents. When the sentence states both a percent and a dollar amount, the larger share is used. */
+function lateFeeShare(excerpt: string, rent: Cents): number | null {
+  const shares: number[] = [];
+  const percent = excerpt.match(/(\d+(?:\.\d+)?)\s*(?:%|percent\b)/i);
+  if (percent) shares.push(Number(percent[1]) / 100);
+  const amount = excerpt.match(/\$\s?([\d,]+(?:\.\d{1,2})?)/);
+  if (amount && rent > 0) shares.push((Number(amount[1].replace(/,/g, "")) * 100) / rent);
+  if (shares.length === 0) return null;
+  return Math.max(...shares);
 }
 
 const prohibitedClauses: Rule[] = [
@@ -179,10 +191,8 @@ const costRules: Rule[] = [
     const c = clause(ctx.terms, "late_fee");
     const rent = ctx.terms.monthlyRent;
     if (!c || rent === null) return null;
-    const amount = c.excerpt.match(/\$\s?([\d,]+)/);
-    if (!amount) return null;
-    const lateFee = Number(amount[1].replace(/,/g, "")) * 100;
-    if (lateFee < rent * LATE_FEE_WARN_RATIO) return null;
+    const share = lateFeeShare(c.excerpt, rent);
+    if (share === null || share < LATE_FEE_WARN_RATIO) return null;
     return {
       code: "HIGH_LATE_FEE",
       severity: "warning",

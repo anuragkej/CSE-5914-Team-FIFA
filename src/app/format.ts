@@ -1,11 +1,25 @@
 import type { Cadence, Cents } from "@/domain/types";
 
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const wholeDollars = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+const withCents = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 export const MISSING = "—";
 
 export function money(cents: Cents | null): string {
-  return cents === null ? MISSING : usd.format(cents / 100);
+  if (cents === null) return MISSING;
+  const format = cents % 100 === 0 ? wholeDollars : withCents;
+  return format.format(cents / 100);
 }
 
 export function percent(fraction: number): string {

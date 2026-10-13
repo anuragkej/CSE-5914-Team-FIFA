@@ -25,7 +25,8 @@ describe("analyze: standard lease", () => {
     expect(result.cost?.trueMonthlyCost).toBe(155750);
     expect(result.cost?.moveInCash).toBe(305000);
 
-    expect(result.market.compMedian).toBe(143000);
+    expect(result.market.compMedian).toBe(146500);
+    expect(result.market.comps.map((c) => c.id)).toEqual(["L002", "L003", "L004", "L006"]);
     expect(result.market.verdict).toBe("at_market");
     expect(result.ownership.status).toBe("match");
 
@@ -86,6 +87,8 @@ describe("analyze: pasted listing", () => {
     expect(result.flags.map((f) => f.code)).toContain("HIGH_HIDDEN_COSTS");
     expect(result.flags.map((f) => f.code)).toContain("NO_PARCEL_RECORD");
     expect(result.flags.map((f) => f.code)).toContain("RENT_ABOVE_MARKET");
+    expect(result.market.compMedian).toBe(118000);
+    expect(result.market.comps.map((c) => c.id)).not.toContain("L007");
   });
 
   it("lets explicit input override extracted address and bedrooms", async () => {
@@ -95,5 +98,17 @@ describe("analyze: pasted listing", () => {
     );
     expect(result.ownership.status).toBe("match");
     expect(result.market.fmr).toBe(143000);
+  });
+
+  it("does not let NaN or an out-of-range bedroom count replace the lease", async () => {
+    const nan = await analyze({ text: doc("standard-lease"), bedrooms: Number.NaN }, ports);
+    expect(nan.terms.bedrooms).toBe(2);
+    expect(nan.market.comps.length).toBeGreaterThan(0);
+
+    const fractional = await analyze({ text: doc("standard-lease"), bedrooms: 2.5 }, ports);
+    expect(fractional.terms.bedrooms).toBe(2);
+
+    const studio = await analyze({ text: doc("pasted-listing"), bedrooms: 0 }, ports);
+    expect(studio.terms.bedrooms).toBe(0);
   });
 });

@@ -12,10 +12,13 @@ import type {
 
 const MONEY = /\$\s?([\d,]+(?:\.\d{1,2})?)/;
 
-const RENT = /(?:monthly\s+rent|rent\s+(?:is|of|shall\s+be|:)|rent\b)[^$\n]{0,40}?\$\s?([\d,]+(?:\.\d{2})?)/i;
 const DEPOSIT = /security\s+deposit[^$\n]{0,40}?\$\s?([\d,]+(?:\.\d{2})?)/i;
 const TERM = /(\d{1,2})\s*-?\s*month/i;
 const BEDROOMS = /(\d)\s*-?\s*(?:bed(?:room)?s?|br)\b/i;
+const STUDIO = /\b(?:studios?|efficienc(?:y|ies))\b/i;
+/** Under $100 is a bedroom count or a fee, not Columbus rent. */
+const MIN_RENT_CENTS = 10_000;
+const RENT_LABEL_SOURCE = "(?:monthly\\s+rent|rent\\s*(?:is|of|shall\\s+be|:))";
 // Case-sensitive on purpose: "Landlord: Acme LLC" should match, "hold Landlord harmless" should not.
 const LANDLORD = /\b(?:[Ll]andlord|LANDLORD|[Ll]essor|LESSOR|[Oo]wner|OWNER|[Mm]anaged\s+by)\s*[:\-]?\s*([A-Z][A-Za-z0-9&.' ]{2,60}?)(?=\s*(?:\(|,|\n|$|\.\s))/m;
 const ADDRESS =
@@ -25,10 +28,16 @@ const P2P_METHODS = ["Zelle", "Venmo", "Cash App", "CashApp", "PayPal Friends", 
 
 const CLAUSE_PATTERNS: Array<[ClauseTopic, RegExp]> = [
   ["attorney_fees", /attorney'?s?\s+fees?/i],
-  ["confession_of_judgment", /confess(?:ion\s+of)?\s+judgment|warrant\s+of\s+attorney/i],
+  [
+    "confession_of_judgment",
+    /confess(?:ion(?:\s+of)?|\s+a)?\s+judgment|judgment\s+by\s+confession|warrant\s+of\s+attorney|cognovit/i,
+  ],
   ["landlord_liability_waiver", /hold\s+(?:the\s+)?landlord\s+harmless|waives?\s+(?:any|all)\s+claims?\s+against\s+(?:the\s+)?landlord|landlord\s+(?:shall|is)\s+not\s+(?:be\s+)?liable\s+for\s+any|indemnify\s+(?:the\s+)?landlord/i],
   ["auto_renewal", /automatically\s+renew/i],
-  ["late_fee", /late\s+(?:fee|charge)[^$\n]{0,40}\$\s?[\d,]+/i],
+  [
+    "late_fee",
+    /late\s+(?:fee|charge)\b[^.\n]{0,80}?(?:\$\s?[\d,]+(?:\.\d{1,2})?|\d+(?:\.\d+)?\s*(?:%|percent\b))/i,
+  ],
 ];
 
 const FEE_CATEGORIES: Array<[FeeCategory, RegExp]> = [
@@ -50,6 +59,66 @@ function toCents(raw: string): Cents {
 function firstMoney(text: string, pattern: RegExp): Cents | null {
   const match = text.match(pattern);
   return match ? toCents(match[1]) : null;
+}
+
+function centsIfRent(raw: string): Cents | null {
+  const cents = toCents(raw);
+  return cents >= MIN_RENT_CENTS ? cents : null;
+}
+
+function amountAfterRentLabel(window: string): Cents | null {
+  for (const dollar of window.matchAll(/\$\s?([\d,]+(?:\.\d{1,2})?)/g)) {
+    const cents = centsIfRent(dollar[1]);
+    if (cents !== null) return cents;
+  }
+  for (const bare of window.matchAll(/\b([\d,]{3,}(?:\.\d{1,2})?)\b/g)) {
+    if (/^(?:19|20)\d{2}$/.test(bare[1])) continue;
+    const cents = centsIfRent(bare[1]);
+    if (cents !== null) return cents;
+  }
+  return null;
+}
+
+/**
+ * Rent is often written as "$1,200 a month" or "rent is 1450", with the dollar
+ * sign missing or sitting on the other side of the word. Fee sentences are
+ * skipped so a $45 utility line is not treated as the rent.
+ */
+function extractMonthlyRent(text: string): Cents | null {
+  for (const match of text.matchAll(new RegExp(RENT_LABEL_SOURCE, "gi"))) {
+    const start = (match.index ?? 0) + match[0].length;
+    const found = amountAfterRentLabel(text.slice(start, start + 80));
+    if (found !== null) return found;
+  }
+
+  const dollarThenRent = text.match(/\$\s?([\d,]+(?:\.\d{1,2})?)[^.\n]{0,40}?(?<!\bpet\s)\brents?\b/i);
+  if (dollarThenRent) {
+    const cents = centsIfRent(dollarThenRent[1]);
+    if (cents !== null) return cents;
+  }
+
+  const rentThenDollar = text.match(/\brents?\b[^$\n]{0,80}?\$\s?([\d,]+(?:\.\d{1,2})?)/i);
+  if (rentThenDollar) {
+    const cents = centsIfRent(rentThenDollar[1]);
+    if (cents !== null) return cents;
+  }
+
+  for (const sentence of sentences(text)) {
+    if (/\b(fee|fees|deposit|parking|pet|utilit|amenit|charge|insurance|application)\b/i.test(sentence)) continue;
+    const monthly = sentence.match(/\$?\s*([\d,]+(?:\.\d{1,2})?)\s*(?:\/\s*mo(?:nth)?|per\s+month|a\s+month|each\s+month)\b/i);
+    if (!monthly) continue;
+    const cents = centsIfRent(monthly[1]);
+    if (cents !== null) return cents;
+  }
+
+  return null;
+}
+
+function extractBedrooms(text: string): number | null {
+  const numbered = text.match(BEDROOMS);
+  if (numbered) return Number(numbered[1]);
+  if (STUDIO.test(text)) return 0;
+  return null;
 }
 
 function sentences(text: string): string[] {
@@ -139,15 +208,14 @@ function extractPaymentMethods(text: string): string[] {
 export class RuleBasedExtractor implements TermsExtractor {
   async extract(input: AnalysisInput): Promise<ExtractedTerms> {
     const text = input.text;
-    const bedrooms = text.match(BEDROOMS);
     const term = text.match(TERM);
     const landlord = text.match(LANDLORD);
     const address = text.match(ADDRESS);
     return {
       address: address ? address[1].replace(/\s+/g, " ").trim() : null,
-      bedrooms: bedrooms ? Number(bedrooms[1]) : null,
+      bedrooms: extractBedrooms(text),
       landlordName: landlord ? landlord[1].trim() : null,
-      monthlyRent: firstMoney(text, RENT),
+      monthlyRent: extractMonthlyRent(text),
       securityDeposit: firstMoney(text, DEPOSIT),
       leaseTermMonths: term ? Number(term[1]) : null,
       fees: extractFees(text),
