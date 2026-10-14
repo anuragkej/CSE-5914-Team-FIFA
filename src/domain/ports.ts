@@ -14,6 +14,8 @@ export interface TermsExtractor {
 export interface ComparablesQuery {
   bedrooms: number;
   neighborhood?: string;
+  /** Drop this address from the comp set so a listing is not compared with itself. */
+  address?: string;
   limit: number;
 }
 

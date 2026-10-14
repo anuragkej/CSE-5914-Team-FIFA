@@ -1,3 +1,4 @@
+import { bedroomOverride } from "./bedrooms";
 import { computeCost } from "./cost";
 import { compareToMarket } from "./market";
 import { checkOwnership } from "./ownership";
@@ -13,7 +14,7 @@ export async function analyze(input: AnalysisInput, ports: AnalysisPorts): Promi
   const terms = {
     ...extracted,
     address: input.address?.trim() || extracted.address,
-    bedrooms: input.bedrooms ?? extracted.bedrooms,
+    bedrooms: bedroomOverride(input.bedrooms) ?? extracted.bedrooms,
     landlordName: input.landlordName?.trim() || extracted.landlordName,
   };
 
@@ -21,7 +22,11 @@ export async function analyze(input: AnalysisInput, ports: AnalysisPorts): Promi
     ports.market.fairMarketRent(),
     terms.bedrooms === null
       ? Promise.resolve([])
-      : ports.market.comparables({ bedrooms: terms.bedrooms, limit: COMPS_LIMIT }),
+      : ports.market.comparables({
+          bedrooms: terms.bedrooms,
+          address: terms.address ?? undefined,
+          limit: COMPS_LIMIT,
+        }),
     terms.address === null ? Promise.resolve(null) : ports.propertyRecords.findByAddress(terms.address),
   ]);
 
