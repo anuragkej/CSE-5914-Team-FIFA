@@ -145,4 +145,6 @@ export interface Analysis {
   ownership: OwnershipCheck;
   flags: Flag[];
   verdict: Verdict;
+  /** Questions to send the landlord before signing, most urgent first. */
+  questions: string[];
 }
