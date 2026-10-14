@@ -4,14 +4,14 @@ Paste a lease or an apartment listing, get the true monthly cost, every fee, a c
 
 Prototype status: runs end to end on fixture data. No live APIs are wired yet; every external source sits behind a port so it can be swapped in without touching the UI or the rules.
 
-Docs: [project context](docs/project-context.md), [API research](docs/api-research.md), [decisions](docs/decisions.md), [open questions](docs/open-questions.md).
+Docs: [project context](docs/project-context.md), [API research](docs/api-research.md), [decisions](docs/decisions.md), [open questions](docs/open-questions.md), [analysis API](docs/analysis-api.md).
 
 ## Run
 
 ```bash
 npm install
 npm run dev        # http://localhost:3000
-npm test           # vitest, 20 tests
+npm test           # vitest
 npm run typecheck
 npm run lint
 npm run build && npm start
@@ -41,11 +41,15 @@ src/
       fixtureMarketData.ts    HUD FY2026 Columbus FMR (real) + synthetic campus-area comps
       fixturePropertyRecords.ts  parcel lookup shaped like the Franklin County Auditor CSV
       sampleDocuments.ts      three sample inputs used by the UI and tests
-  app/             Next.js App Router: page, server action, form, report
+  app/             Next.js App Router: page, server action, form, report, /api/v1/analyses
   components/ui/   shadcn/ui components, copied in as source (nova preset)
 ```
 
 Data flow: `AnalyzerForm` (client) submits to `analyzeAction` (server action) which calls `analyze(input, createPorts())`. `analyze` extracts terms, fetches FMR, comps and the parcel record in parallel, computes cost, compares to market, checks ownership, evaluates rules, derives the verdict, and returns one `Analysis` object the `Report` renders.
+
+## Shared analysis API
+
+`POST /api/v1/analyses` accepts lease/listing text and optional overrides, then returns the same report data as the web form. Both entry points share validation, including field-specific errors and integer bedroom counts. See [request examples and response contract](docs/analysis-api.md). Stateless and fixture-backed for Timebox 2.
 
 ## Where adapters plug in
 
