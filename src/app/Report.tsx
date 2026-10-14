@@ -19,6 +19,7 @@ import type {
 } from "@/domain/types";
 import { CostCard } from "./CostCard";
 import { cadenceLabel, MISSING, money, signedPercent } from "./format";
+import { QuestionsCard } from "./QuestionsCard";
 import { VerdictAlert } from "./VerdictAlert";
 
 type AlertVariant = NonNullable<VariantProps<typeof alertVariants>["variant"]>;
@@ -207,12 +208,13 @@ function OwnershipSection({ ownership }: { ownership: OwnershipCheck }) {
 }
 
 export function Report({ analysis }: { analysis: Analysis }) {
-  const { terms, cost, market, ownership, flags, verdict } = analysis;
+  const { terms, cost, market, ownership, flags, verdict, questions } = analysis;
   return (
     <section className="flex flex-col gap-6" aria-live="polite">
       <VerdictAlert verdict={verdict} />
       <CostCard cost={cost} fallback={verdict.summary} />
       <FlagsCard flags={flags} />
+      <QuestionsCard questions={questions} />
       <Accordion multiple defaultValue={["terms"]}>
         <AccordionItem value="terms">
           <AccordionTrigger>What we read</AccordionTrigger>
