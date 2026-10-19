@@ -113,8 +113,8 @@ function TermsSection({ terms }: { terms: ExtractedTerms }) {
           { label: "Address", value: terms.address ?? MISSING },
           { label: "Bedrooms", value: terms.bedrooms ?? MISSING },
           { label: "Landlord", value: terms.landlordName ?? MISSING },
-          { label: "Monthly rent", value: money(terms.monthlyRent) },
-          { label: "Security deposit", value: money(terms.securityDeposit) },
+          { label: "Monthly rent", value: <span className="font-mono text-[13px]">{money(terms.monthlyRent)}</span> },
+          { label: "Security deposit", value: <span className="font-mono text-[13px]">{money(terms.securityDeposit)}</span> },
           { label: "Term", value: terms.leaseTermMonths ? `${terms.leaseTermMonths} months` : MISSING },
         ]}
       />
@@ -134,7 +134,7 @@ function TermsSection({ terms }: { terms: ExtractedTerms }) {
             {terms.fees.map((fee, i) => (
               <TableRow key={`${fee.label}-${i}`}>
                 <TableCell className="whitespace-normal">{fee.label}</TableCell>
-                <TableCell className="text-right tabular-nums">{money(fee.amount)}</TableCell>
+                <TableCell className="text-right font-mono text-[13px] tabular-nums">{money(fee.amount)}</TableCell>
                 <TableCell className="text-muted-foreground">{cadenceLabel[fee.cadence]}</TableCell>
               </TableRow>
             ))}
@@ -158,7 +158,7 @@ function MarketSection({ market }: { market: MarketComparison }) {
           label: b.label,
           value: (
             <span className="flex flex-wrap items-center gap-2">
-              {money(b.amount)}
+              <span className="font-mono text-[13px]">{money(b.amount)}</span>
               <Badge variant={verdict.badge}>{signedPercent(b.delta)}</Badge>
             </span>
           ),
@@ -175,7 +175,7 @@ function MarketSection({ market }: { market: MarketComparison }) {
                 <TableCell className="text-muted-foreground">
                   {c.bedrooms}bd/{c.bathrooms}ba
                 </TableCell>
-                <TableCell className="text-right tabular-nums">{money(c.rent)}</TableCell>
+                <TableCell className="text-right font-mono text-[13px] tabular-nums">{money(c.rent)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
