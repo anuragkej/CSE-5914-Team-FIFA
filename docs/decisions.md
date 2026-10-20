@@ -38,4 +38,8 @@ Management companies, LLCs and legitimate subletters all fail a naive owner-name
 
 ## Not built on purpose
 
-Chatbot, preference filters, recommendations, applicant quizzes, profile validation, PDF upload, persistence, auth. Each is in `open-questions.md`. The instructor said "choose your battles"; the top three features end to end were the battle.
+Chatbot, preference filters, recommendations, applicant quizzes, profile validation, PDF upload, persistence. Each is in `open-questions.md`. The instructor said "choose your battles"; the top three features end to end were the battle.
+
+## Accounts: email and password
+
+Sign-up and log-in use Supabase email and password with confirmation on. A new account is not active until the student opens the link and then logs in. The analyzer on `/` stays available without an account.
