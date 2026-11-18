@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { signOutAction } from "@/app/auth/actions";
 import { greetingName } from "./reviewFields";
 
-export type WorkspaceSection = "overview" | "new" | "compare" | "saved";
+export type WorkspaceSection = "overview" | "new" | "compare" | "saved" | "listings";
 
 const NAV: Array<{ id: WorkspaceSection; href: string; label: string }> = [
   { id: "overview", href: "/dashboard", label: "Overview" },
   { id: "new", href: "/analyze/upload", label: "New analysis" },
   { id: "compare", href: "/compare", label: "Compare options" },
   { id: "saved", href: "/saved", label: "Saved analyses" },
+  { id: "listings", href: "/listings", label: "Listing discussions" },
 ];
 
 export async function WorkspaceFrame({
