@@ -1,4 +1,5 @@
 import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAuth, type Auth, type AuthClient } from "@/domain/auth";
@@ -222,4 +223,25 @@ function supabaseAnalysisStore(client: { from(name: "saved_analyses"): SavedAnal
       });
     },
   };
+}
+
+/**
+ * A request-scoped Supabase client that carries the signed-in student's cookies,
+ * so RLS sees auth.uid(). Returns null when the Supabase env vars are not set.
+ */
+export async function requestDataClient(): Promise<SupabaseClient | null> {
+  const parsed = env();
+  switch (parsed.kind) {
+    case "missing":
+      return null;
+    case "configured":
+      return createServerClient(parsed.url, parsed.anonKey, {
+        cookies: await requestCookieMethods(),
+        global: { fetch: fetchWithTimeout },
+      });
+    default: {
+      const unreachable: never = parsed;
+      return unreachable;
+    }
+  }
 }
